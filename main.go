@@ -123,6 +123,9 @@ func setupService(cfg *configs.Config) http.Handler {
 
 		topupBalanceHandler := handlers.TopupBalanceHandler{UserBalanceService: &userBalanceService}
 		r.Post("/balance_topup", topupBalanceHandler.Handle)
+
+		transferHandler := handlers.TransferHandler{UserBalanceService: &userBalanceService}
+		r.Post("/transfer", transferHandler.Handle)
 	})
 
 	return r

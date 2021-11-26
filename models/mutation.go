@@ -33,3 +33,33 @@ func NewTopupMutation(user User, amount uint32) Mutation {
 	}
 	return mutation
 }
+
+func NewOutgoingMutation(user User, amount uint32) Mutation {
+	mutation := Mutation{
+		UserID:       user.ID,
+		RefID:        utils.NewUUIDString(),
+		MutationType: OUTGOING,
+		Value:        amount,
+		CreatedAt:    utils.TimeNowUTC(),
+	}
+	return mutation
+}
+
+func NewIncomingMutation(user User, amount uint32) Mutation {
+	mutation := Mutation{
+		UserID:       user.ID,
+		RefID:        utils.NewUUIDString(),
+		MutationType: INCOMING,
+		Value:        amount,
+		CreatedAt:    utils.TimeNowUTC(),
+	}
+	return mutation
+}
+
+func NewTransferBalanceMutation(user User, amount uint32, destUser User) (outgoing Mutation, incoming Mutation) {
+	outgoing = NewOutgoingMutation(user, amount)
+	incoming = NewIncomingMutation(destUser, amount)
+	incoming.RefID = outgoing.RefID
+	incoming.CreatedAt = outgoing.CreatedAt
+	return
+}

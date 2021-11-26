@@ -17,6 +17,7 @@ type UserBalanceService struct {
 type IUserBalanceService interface {
 	GetBalanceByUsername(username string) (balance int64, err error)
 	TopupBalance(user models.User, amount uint32) error
+	Transfer(user models.User, amount uint32, destUsername string) error
 }
 
 func (us *UserBalanceService) GetBalanceByUsername(username string) (balance int64, err error) {
@@ -41,6 +42,25 @@ func (us *UserBalanceService) TopupBalance(user models.User, amount uint32) (err
 	err = us.UserBalanceWrite.Topup(user, amount)
 	if err != nil {
 		err = errs.ErrInternalServer
+		return
+	}
+	return
+}
+
+func (us *UserBalanceService) Transfer(user models.User, amount uint32, destUsername string) (err error) {
+	destUser := models.User{Username: destUsername}
+	err = us.UserRepoRead.GetUser(&destUser)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		log.Println(err)
+		return
+	}
+
+	if destUser.ID == 0 {
+		return errs.ErrDestinationUserNotFound
+	}
+
+	err = us.UserBalanceWrite.Transfer(user, amount, destUser)
+	if err != nil {
 		return
 	}
 	return
