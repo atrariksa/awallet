@@ -8,4 +8,9 @@ type CreateUserResponse struct {
 type UserDetails struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
+	Balance  int64  `json:"balance"`
+}
+
+type ReadBalanceResponse struct {
+	Balance int64 `json:"balance"`
 }

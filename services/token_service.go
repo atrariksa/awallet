@@ -20,14 +20,15 @@ func NewTokenService(cfg *configs.Config) TokenService {
 }
 
 type ITokenService interface {
-	CreateToken(userID uint) (string, error)
+	CreateToken(user models.User) (string, error)
 }
 
-func (ts *TokenService) CreateToken(userID uint) (signedString string, err error) {
+func (ts *TokenService) CreateToken(user models.User) (signedString string, err error) {
 	uuidStr := uuid.New().String()
 	claims := &models.JwtClaims{
-		ID:     uuidStr,
-		UserID: userID,
+		ID:       uuidStr,
+		UserID:   user.ID,
+		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt: time.Now().Unix(),
 		},

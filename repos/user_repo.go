@@ -19,13 +19,13 @@ type UserRepoRead struct {
 }
 
 type IUserRepoRead interface {
-	Read(username string, user *models.User) error
+	GetUser(user *models.User) error
 }
 
-func (ur *UserRepoRead) Read(username string, user *models.User) error {
-	bUser, err := ur.Cache.Get(username)
+func (ur *UserRepoRead) GetUser(user *models.User) error {
+	bUser, err := ur.Cache.Get(user.Username)
 	if err == redis.Nil {
-		err = ur.DBRead.Debug().Where(&models.User{Username: username}).First(user).Error
+		err = ur.DBRead.Debug().Where(user).First(user).Error
 		if err != nil {
 			log.Println(err)
 			return err
@@ -37,7 +37,7 @@ func (ur *UserRepoRead) Read(username string, user *models.User) error {
 			return err
 		}
 
-		ur.Cache.Set(username, bUser)
+		ur.Cache.Set(user.Username, bUser)
 		return nil
 	}
 

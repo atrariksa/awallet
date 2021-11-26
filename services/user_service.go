@@ -21,7 +21,8 @@ type IUserService interface {
 
 func (us *UserService) CreateUser(username string) (user models.User, err error) {
 
-	err = us.UserRepoRead.Read(username, &user)
+	user.Username = username
+	err = us.UserRepoRead.GetUser(&user)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		log.Println(err)
 		return
@@ -31,7 +32,7 @@ func (us *UserService) CreateUser(username string) (user models.User, err error)
 		return models.User{}, errs.ErrUserAlreadyExists
 	}
 
-	user = models.User{Username: username}
+	// user = models.User{Username: username}
 	err = us.UserRepoWrite.Create(&user)
 	if err != nil {
 		log.Println(err)

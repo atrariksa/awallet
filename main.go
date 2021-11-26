@@ -114,7 +114,15 @@ func setupService(cfg *configs.Config) http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares.AuthMiddlewareHandler(cfg))
-		// r.Get("/balance_read")
+
+		userBalanceWrite := repos.UserBalanceRepoWrite{DBWrite: dbWrite, Cache: cacheRepo}
+		userBalanceService := services.UserBalanceService{UserRepoRead: &userRepoRead, UserBalanceWrite: &userBalanceWrite}
+
+		readBalanceHandler := handlers.ReadBalanceHandler{UserBalanceService: &userBalanceService}
+		r.Get("/balance_read", readBalanceHandler.Handle)
+
+		topupBalanceHandler := handlers.TopupBalanceHandler{UserBalanceService: &userBalanceService}
+		r.Post("/balance_topup", topupBalanceHandler.Handle)
 	})
 
 	return r
