@@ -15,6 +15,13 @@ type Mutation struct {
 	CreatedAt    time.Time
 }
 
+type TopTransactionResult struct {
+	Username     string
+	RefID        string
+	MutationType MutationType
+	Value        uint32
+}
+
 type MutationType string
 
 const (

@@ -1,11 +1,18 @@
 package repos
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/atrariksa/awallet/errs"
 	"github.com/atrariksa/awallet/models"
+	"github.com/go-redis/redis"
 	"gorm.io/gorm"
+)
+
+const (
+	TopTrsPrefix = "top_trs_%v"
 )
 
 type UserBalanceRepoWrite struct {
@@ -98,4 +105,67 @@ func (ur *UserBalanceRepoWrite) Transfer(user models.User, amount uint32, destUs
 	ur.Cache.Del(user.Username)
 
 	return nil
+}
+
+/*
+ */
+
+type UserBalanceRepoRead struct {
+	DBRead *gorm.DB
+	Cache  ICache
+}
+
+type IUserBalanceRepoRead interface {
+	GetTopTransactionResult(user models.User) (data []models.TopTransactionResult, err error)
+}
+
+func (ubr *UserBalanceRepoRead) GetTopTransactionResult(user models.User) (data []models.TopTransactionResult, err error) {
+
+	key := fmt.Sprintf(TopTrsPrefix, user.Username)
+	bData, err := ubr.Cache.Get(key)
+	if err == redis.Nil {
+		userMutations := ubr.DBRead.Debug().
+			Table("mutations as m2").
+			Limit(10).
+			Order("m2.value desc").
+			Where("m2.user_id = ?", user.ID).
+			Where("m2.mutation_type IN ?",
+				[]string{string(models.INCOMING), string(models.OUTGOING)})
+
+		userJoinMutation := ubr.DBRead.Debug().
+			Table("users as u").
+			Order("m2.value desc").
+			Select("u.username, m2.ref_id , m2.mutation_type ,m2.value").
+			Joins("join mutations m on m.user_id = u.id").
+			Joins(
+				"join (?) as m2 on m2.ref_id = m.ref_id "+
+					"and m.user_id != m2.user_id",
+				userMutations,
+			).
+			Scan(&data)
+
+		err = userJoinMutation.Error
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		bData, err = json.Marshal(&data)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		ubr.Cache.Set(key, bData)
+		return
+	}
+
+	if bData != nil {
+		err = json.Unmarshal(bData, &data)
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }

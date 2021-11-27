@@ -14,3 +14,8 @@ type UserDetails struct {
 type ReadBalanceResponse struct {
 	Balance int64 `json:"balance"`
 }
+
+type TopTransactionsPerUser struct {
+	Username string `json:"username"`
+	Amount   int64  `json:"amount"`
+}

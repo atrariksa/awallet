@@ -116,7 +116,12 @@ func setupService(cfg *configs.Config) http.Handler {
 		r.Use(middlewares.AuthMiddlewareHandler(cfg))
 
 		userBalanceWrite := repos.UserBalanceRepoWrite{DBWrite: dbWrite, Cache: cacheRepo}
-		userBalanceService := services.UserBalanceService{UserRepoRead: &userRepoRead, UserBalanceWrite: &userBalanceWrite}
+		userBalanceRead := repos.UserBalanceRepoRead{DBRead: dbRead, Cache: cacheRepo}
+		userBalanceService := services.UserBalanceService{
+			UserRepoRead:     &userRepoRead,
+			UserBalanceWrite: &userBalanceWrite,
+			UserBalanceRead:  &userBalanceRead,
+		}
 
 		readBalanceHandler := handlers.ReadBalanceHandler{UserBalanceService: &userBalanceService}
 		r.Get("/balance_read", readBalanceHandler.Handle)
@@ -126,6 +131,9 @@ func setupService(cfg *configs.Config) http.Handler {
 
 		transferHandler := handlers.TransferHandler{UserBalanceService: &userBalanceService}
 		r.Post("/transfer", transferHandler.Handle)
+
+		topTransactionsPerUserHandler := handlers.TopTransactionsPerUserHandler{UserBalanceService: &userBalanceService}
+		r.Get("/top_transactions_per_user", topTransactionsPerUserHandler.Handle)
 	})
 
 	return r
