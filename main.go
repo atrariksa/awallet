@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/atrariksa/awallet/blackbox"
 	"github.com/atrariksa/awallet/configs"
+	"github.com/atrariksa/awallet/constants"
 	"github.com/atrariksa/awallet/drivers"
 	"github.com/atrariksa/awallet/handlers"
 	"github.com/atrariksa/awallet/middlewares"
@@ -23,7 +25,13 @@ import (
 
 func main() {
 
-	cmdMessage := `use "server" to run service; use "migrate up" to setup database`
+	cmdMessage :=
+		`
+	Please use following commands :
+	1. use "migrate up" to migrate tables
+	2. use "server" to run service
+	3. use "blackbox" to run test cases
+	`
 	if len(os.Args) == 1 {
 		log.Fatalln(cmdMessage)
 	}
@@ -33,6 +41,8 @@ func main() {
 		server()
 	case "migrate":
 		migrate(os.Args)
+	case "blackbox":
+		runBlackbox()
 	default:
 		log.Println(fmt.Sprintf(`Unknown command "%v". %v`, command, cmdMessage))
 	}
@@ -110,7 +120,7 @@ func setupService(cfg *configs.Config) http.Handler {
 		TokenService: &tokenService,
 	}
 
-	r.Post("/create_user", registerHandler.Handle)
+	r.Post(constants.CREATE_USER_PATH, registerHandler.Handle)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares.AuthMiddlewareHandler(cfg))
@@ -124,19 +134,19 @@ func setupService(cfg *configs.Config) http.Handler {
 		}
 
 		readBalanceHandler := handlers.ReadBalanceHandler{UserBalanceService: &userBalanceService}
-		r.Get("/balance_read", readBalanceHandler.Handle)
+		r.Get(constants.READ_BALANCE_PATH, readBalanceHandler.Handle)
 
 		topupBalanceHandler := handlers.TopupBalanceHandler{UserBalanceService: &userBalanceService}
-		r.Post("/balance_topup", topupBalanceHandler.Handle)
+		r.Post(constants.TOPUP_BALANCE_PATH, topupBalanceHandler.Handle)
 
 		transferHandler := handlers.TransferHandler{UserBalanceService: &userBalanceService}
-		r.Post("/transfer", transferHandler.Handle)
+		r.Post(constants.TRANSFER_PATH, transferHandler.Handle)
 
 		topTransactionsPerUserHandler := handlers.TopTransactionsPerUserHandler{UserBalanceService: &userBalanceService}
-		r.Get("/top_transactions_per_user", topTransactionsPerUserHandler.Handle)
+		r.Get(constants.TOP_TRANSACTIONS_PER_USER_PATH, topTransactionsPerUserHandler.Handle)
 
 		topUserHandler := handlers.ListTopUserHandler{UserService: &userService}
-		r.Get("/top_users", topUserHandler.Handle)
+		r.Get(constants.TOP_USERS_PATH, topUserHandler.Handle)
 	})
 
 	return r
@@ -147,4 +157,10 @@ func migrate([]string) {
 	dbWrite := drivers.NewDBClientWrite(cfg)
 	m := migrations.Migrator{DB: dbWrite}
 	m.MigrateUp()
+}
+
+func runBlackbox() {
+	cfg := configs.Get()
+	bb := blackbox.NewBlackBox(cfg)
+	bb.Run()
 }

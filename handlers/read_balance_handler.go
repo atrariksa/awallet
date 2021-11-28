@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/atrariksa/awallet/models"
@@ -22,6 +23,7 @@ func (rbh *ReadBalanceHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	} else {
 		resp := models.ReadBalanceResponse{Balance: balance}
 		bResp, _ := json.Marshal(&resp)
+		log.Println(string(bResp))
 		w.WriteHeader(200)
 		w.Write(bResp)
 	}

@@ -30,6 +30,11 @@ func (tbh *TransferHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user.Username == req.ToUsername {
+		tbh.errBadRequest(w, http.StatusText(http.StatusBadRequest))
+		return
+	}
+
 	err = tbh.UserBalanceService.Transfer(user, req.Amount, req.ToUsername)
 	if err != nil {
 		if err.Error() == errs.ErrInsufficientBalance.Error() {

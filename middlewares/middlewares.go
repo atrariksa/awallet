@@ -28,7 +28,15 @@ func isAuthorized(next http.Handler, cfg *configs.Config) http.Handler {
 			})
 
 			if err != nil {
-				fmt.Fprintf(w, err.Error())
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
+				return
+			}
+
+			if token == nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
+				return
 			}
 
 			if claims, ok := token.Claims.(*models.JwtClaims); ok && token.Valid {
@@ -37,11 +45,13 @@ func isAuthorized(next http.Handler, cfg *configs.Config) http.Handler {
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+				return
 			}
 
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
+			return
 		}
 	})
 }

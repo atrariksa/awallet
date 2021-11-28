@@ -16,7 +16,6 @@ type Config struct {
 	} `mapstructure:"APP"`
 
 	Cache struct {
-		IsEnabled     bool          `mapstructure:"IS_ENABLED"`
 		Host          string        `mapstructure:"HOST"`
 		Port          string        `mapstructure:"PORT"`
 		DialTimeout   time.Duration `mapstructure:"DIAL_TIMEOUT"`
@@ -35,9 +34,7 @@ type Config struct {
 	} `mapstructure:"JWT"`
 
 	DB struct {
-		IsEnabled          bool `mapstructure:"IS_ENABLED"`
-		IsMigrationEnabled bool `mapstructure:"IS_MIGRATION_ENABLED"`
-		MySQL              struct {
+		MySQL struct {
 			Read struct {
 				Host                 string        `mapstructure:"HOST"`
 				Port                 string        `mapstructure:"PORT"`
