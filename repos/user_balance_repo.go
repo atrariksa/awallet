@@ -81,6 +81,19 @@ func (ur *UserBalanceRepoWrite) Transfer(user models.User, amount uint32, destUs
 		return
 	}
 
+	updateTotalOutgoing := tx.Debug().Model(&models.UserTotalOutgoing{}).Where("user_id = ?", user.ID).UpdateColumn("value", gorm.Expr("value + ?", amount))
+	if updateTotalOutgoing.Error != nil {
+		log.Println(err)
+		tx.Rollback()
+		return
+	}
+
+	if updateTotalOutgoing.RowsAffected == 0 {
+		err = errs.ErrInternalServer
+		tx.Rollback()
+		return
+	}
+
 	err = tx.Debug().Create(&mutationIncoming).Error
 	if err != nil {
 		log.Println(err)
@@ -88,9 +101,16 @@ func (ur *UserBalanceRepoWrite) Transfer(user models.User, amount uint32, destUs
 		return
 	}
 
-	err = tx.Debug().Model(&destUser).UpdateColumn("balance", gorm.Expr("balance + ?", amount)).Error
+	addBalance := tx.Debug().Model(&destUser).UpdateColumn("balance", gorm.Expr("balance + ?", amount))
+	err = addBalance.Error
 	if err != nil {
 		log.Println(err)
+		tx.Rollback()
+		return
+	}
+
+	if addBalance.RowsAffected == 0 {
+		err = errs.ErrDestinationUserNotFound
 		tx.Rollback()
 		return
 	}
@@ -103,6 +123,9 @@ func (ur *UserBalanceRepoWrite) Transfer(user models.User, amount uint32, destUs
 	}
 
 	ur.Cache.Del(user.Username)
+	ur.Cache.Del(destUser.Username)
+	ur.Cache.Del(TopUser)
+	ur.Cache.Del(fmt.Sprintf(TopTrsPrefix, user.Username))
 
 	return nil
 }

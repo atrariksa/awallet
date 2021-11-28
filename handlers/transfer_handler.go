@@ -44,7 +44,6 @@ func (tbh *TransferHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(204)
-	w.Write([]byte("Transfer success"))
 }
 
 func (tbh *TransferHandler) validateAndGetTransferPayload(r *http.Request) (req models.TransferRequest, err error) {

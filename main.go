@@ -134,6 +134,9 @@ func setupService(cfg *configs.Config) http.Handler {
 
 		topTransactionsPerUserHandler := handlers.TopTransactionsPerUserHandler{UserBalanceService: &userBalanceService}
 		r.Get("/top_transactions_per_user", topTransactionsPerUserHandler.Handle)
+
+		topUserHandler := handlers.ListTopUserHandler{UserService: &userService}
+		r.Get("/top_users", topUserHandler.Handle)
 	})
 
 	return r

@@ -19,3 +19,8 @@ type TopTransactionsPerUser struct {
 	Username string `json:"username"`
 	Amount   int64  `json:"amount"`
 }
+
+type TopUserResponse struct {
+	Username        string `json:"username"`
+	TransactedValue uint64 `json:"transacted_value"`
+}

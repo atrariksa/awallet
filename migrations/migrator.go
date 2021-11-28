@@ -13,5 +13,6 @@ func (m *Migrator) MigrateUp() {
 	m.DB.AutoMigrate(
 		&models.User{},
 		&models.Mutation{},
+		&models.UserTotalOutgoing{},
 	)
 }

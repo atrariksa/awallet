@@ -11,6 +11,7 @@ import (
 
 const (
 	DuplicateKey string = "1062"
+	TopUser      string = "top_user"
 )
 
 type UserRepoRead struct {
@@ -20,6 +21,7 @@ type UserRepoRead struct {
 
 type IUserRepoRead interface {
 	GetUser(user *models.User) error
+	GetListTopUser() (data []models.UserTotalOutgoingResult, err error)
 }
 
 func (ur *UserRepoRead) GetUser(user *models.User) error {
@@ -51,6 +53,45 @@ func (ur *UserRepoRead) GetUser(user *models.User) error {
 	return nil
 }
 
+func (ur *UserRepoRead) GetListTopUser() (data []models.UserTotalOutgoingResult, err error) {
+
+	bData, err := ur.Cache.Get(TopUser)
+	if err == redis.Nil {
+
+		userOutgoing := ur.DBRead.Debug().
+			Table("user_total_outgoings as utg").
+			Limit(10).
+			Order("value desc").
+			Select("utg.*, u.*").
+			Joins("join users u on utg.user_id = u.id").
+			Scan(&data)
+
+		err = userOutgoing.Error
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		bData, err = json.Marshal(&data)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		ur.Cache.Set(TopUser, bData)
+		return
+	}
+
+	if bData != nil {
+		err = json.Unmarshal(bData, &data)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
 /*
  */
 
@@ -65,13 +106,28 @@ type IUserRepoWrite interface {
 
 func (ur *UserRepoWrite) Create(user *models.User) error {
 
-	err := ur.DBWrite.Debug().Create(user).Error
+	tx := ur.DBWrite.Debug().Begin()
+
+	err := tx.Create(user).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Create(&models.UserTotalOutgoing{UserID: user.ID}).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit().Error
 	if err != nil {
 		return err
 	}
 
 	bUser, err := json.Marshal(&user)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 

@@ -8,8 +8,9 @@ import (
 
 type Mutation struct {
 	ID           uint
-	UserID       uint `gorm:"index:idx_user_id"`
-	RefID        string
+	User         User
+	UserID       uint   `gorm:"index:idx_user_id"`
+	RefID        string `gorm:"index:idx_ref_id"`
 	MutationType MutationType
 	Value        uint32
 	CreatedAt    time.Time

@@ -35,7 +35,6 @@ func (tbh *TopupBalanceHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(204)
-	w.Write([]byte("Topup successful"))
 }
 
 func (tbh *TopupBalanceHandler) validateAndGetTopupPayload(r *http.Request) (req models.TopupBalanceRequest, err error) {

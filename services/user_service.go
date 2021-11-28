@@ -17,6 +17,7 @@ type UserService struct {
 
 type IUserService interface {
 	CreateUser(username string) (user models.User, err error)
+	GetListTopUser() (data []models.TopUserResponse, err error)
 }
 
 func (us *UserService) CreateUser(username string) (user models.User, err error) {
@@ -40,6 +41,22 @@ func (us *UserService) CreateUser(username string) (user models.User, err error)
 			return models.User{}, errs.ErrUserAlreadyExists
 		}
 		return models.User{}, errs.ErrInternalServer
+	}
+	return
+}
+
+func (us *UserService) GetListTopUser() (data []models.TopUserResponse, err error) {
+	dataResult, err := us.UserRepoRead.GetListTopUser()
+	if err != nil {
+		return
+	}
+	for _, v := range dataResult {
+		data = append(data,
+			models.TopUserResponse{
+				Username:        v.Username,
+				TransactedValue: v.Value,
+			},
+		)
 	}
 	return
 }
