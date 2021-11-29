@@ -29,6 +29,7 @@ func NewBlackBox(cfg *configs.Config) *Blackbox {
 }
 
 func (b *Blackbox) Run() {
+	b.cleanUp()
 	b.runTestAPICreateUser()
 	b.runTestAPIReadBalance()
 	b.runTestAPITopupBalance()
@@ -695,7 +696,7 @@ func (b *Blackbox) runTestAPITopUsers() {
 			},
 		},
 		{
-			"TopTransactionPerUser #401: ",
+			"TopUsers #401: ",
 			func() (*http.Client, *http.Request, []models.CreateUserResponse, []models.CreateUserResponse) {
 				client, req := topUsersRequest(b.cfg, "")
 				return client, req, []models.CreateUserResponse{}, []models.CreateUserResponse{}
